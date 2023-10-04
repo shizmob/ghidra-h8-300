@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<patternlist>
+	<patternpairs totalbits="32" postbits="16">
+		<prepatterns>
+			<data>0x54 0x70</data> <!-- rts -->
+			<data>0x56 0x70</data> <!-- rte -->
+		</prepatterns>
+
+		<postpatterns>
+			<data>0x6D ....1111</data>
+			<data>0x01 0x00 0x6D ....0111</data> <!-- push reg32 -->
+			<funcstart/>
+		</postpatterns>
+	</patternpairs>
+</patternlist>

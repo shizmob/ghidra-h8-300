@@ -1,0 +1,113 @@
+# Macros
+
+macro update_add(a, b) {
+	local r = a + b;
+	update_ZN(r);
+	$(V) = scarry(a, b);
+	$(C) = carry(a, b);
+
+	local hmask = -1 >> 4;
+	local h = (a & hmask) + (b & hmask);
+	$(H) = (h > hmask);
+
+	a = r;
+}
+macro update_add3(a, b, c) {
+	update_add(a, b);
+	local v:1 = $(V);
+	update_add(a, c);
+	$(V) = $(V) | v;
+}
+
+macro update_sub(a, b) {
+	local r = a - b;
+	update_ZN(r);
+	$(V) = sborrow(a, b);
+	$(C) = (b > a);
+
+	local hmask = -1 >> 4;
+	$(H) = (b & hmask) > (a & hmask);
+
+	a = r;
+}
+macro update_sub3(a, b, c) {
+	update_sub(a, b);
+	local v:1 = $(V);
+	update_sub(a, c);
+	$(V) = $(V) | v;
+}
+
+
+# Instructions
+
+:add.b IMM8,  RD8  is op_lo=0x8 & RD8; IMM8 { update_add(RD8, IMM8); }
+:add.b RS8,   RD8  is op=0x08; RS8 & RD8    { update_add(RD8, RS8); }
+:add.w RS16,  RD16 is op=0x09; RS16 & RD16  { update_add(RD16, RS16); }
+:addx  IMM8,  RD8  is op_lo=0x9 & RD8; IMM8 { local c = $(C); update_add3(RD8, IMM8, c); }
+:addx  RS8,   RD8  is op=0x0E; RS8 & RD8    { local c = $(C); update_add3(RD8, RS8, c); }
+
+:sub.b RS8,  RD8  is op=0x18; RS8 & RD8     { update_sub(RD8, RS8); }
+:sub.w RS16, RD16 is op=0x19; RS16 & RD16   { update_sub(RD16, RS16); }
+:subx IMM8,  RD8  is op_lo=0xB & RD8; IMM8  { local c = $(C); update_sub3(RD8, IMM8, c); }
+:subx RS8,   RD8  is op=0x1E; RS8 & RD8     { local c = $(C); update_sub3(RD8, RS8, c); }
+
+:cmp.b IMM8, RD8 is op_lo=0xA & RD8; IMM8 {
+	local r = RD8;
+	update_sub(r, IMM8);
+}
+
+:cmp.b RS8, RD8 is op=0x1C; RS8 & RD8 {
+	local r = RD8;
+	update_sub(r, RS8);
+}
+
+:cmp.w RS16, RD16 is op=0x1D; RS16 & RD16 {
+	local r = RD16;
+	update_sub(r, RS16);
+}
+
+:daa RD8 is op=0x0F; op_lo=0x0 & RD8 {
+	local v:1 = RD8;
+	local vl:1 = v & 0xF;
+	local h:1 = 0;
+	# Stolen from http://www.righto.com/2023/01/understanding-x86s-decimal-adjust-after.html
+	# original attempt from H8 manual tables:
+	#   h = h | (0x06 * ((vl >= (1 - $(H)) * 10) & (vl <= 15 - $(H) * 12)));
+	#   h = h | (0x60 * ((vu >= 10 - $(C) * 9 - (1 - $(C)) * (vl >= 10)) & (vu <= 15 - $(C) * 13 + $(C) * $(H))));
+	h = h | (0x06 * ((vl >= 0xA) | $(H)));
+	h = h | (0x60 * ((v >= 0x9A) | $(C)));
+	update_add(RD8, h);
+}
+
+:das RD8 is op=0x1F; op_lo=0x0 & RD8 {
+	local h:1 = 0;
+	local c:1 = $(C);
+	# original attempt from H8 manual tables:
+	#   h = h | ((0xFA - $(C) * 0x60) * $(H) * ((vl >= 6) & (vu >= $(C) * 6) & (vu <= 15 - $(C) * 7)));
+	#   h = h | (0xA0 * (1 - $(H)) * ($(C) & (vl <= 9) & (vu >= 7)));
+	h = h + $(C) * 0xA0;
+	h = h + $(H) * 0xFA;
+	update_add(RD8, h);
+	$(C) = c;
+}
+
+:dec.b RD8 is op=0x1A; op_lo=0x0 & RD8  { update_sub(RD8, 1:1); }
+:inc.b RD8 is op=0x0A; op_lo=0x0 & RD8  { update_add(RD8, 1:1); }
+
+:neg.b RD8 is op=0x17; op_lo=0x8 & RD8 {
+	update_sub3(RD8, RD8, RD8);
+	$(V) = (RD8 == (1 << 7));
+}
+
+
+:divxu RS8, RD16 is op=0x51; RS8 & RD16 {
+	local d:2 = zext(RS8);
+	RD16 = (RD16 / d) | ((RD16 % d) << 8);
+	$(Z) = (d == 0);
+	$(N) = (RS8 s< 0);
+}
+
+:mulxu.b RS8, RD16 is op=0x50; RS8 & RD16 {
+	RD16 = zext(RD16:1 * RS8);
+	update_ZNV(RD16);
+}

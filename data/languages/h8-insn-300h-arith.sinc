@@ -1,0 +1,88 @@
+# Instructions
+
+:add.w IMM16,   RD16 is op=0x79; op_lo=0x1 & RD16; IMM16 { update_add(RD16, IMM16); }
+:add.l IMM32,   RD32 is op=0x7A; op_lo=0x1 & RD32; IMM32 { update_add(RD32, IMM32); }
+:add.l RS32SET, RD32 is op=0x0A; RS32SET & RD32          { update_add(RD32, RS32SET); }
+:adds "#1",     RD32 is op=0x0B; op_lo=0x0 & RD32        { RD32 = RD32 + 1; }
+:adds "#2",     RD32 is op=0x0B; op_lo=0x8 & RD32        { RD32 = RD32 + 2; }
+:adds "#4",     RD32 is op=0x0B; op_lo=0x9 & RD32        { RD32 = RD32 + 4; }
+
+:sub.w IMM16,   RD16 is op=0x79; op_lo=0x3 & RD16; IMM16 { update_sub(RD16, IMM16); }
+:sub.l IMM32,   RD32 is op=0x7A; op_lo=0x3 & RD32; IMM32 { update_sub(RD32, IMM32); }
+:sub.l RS32SET, RD32 is op=0x1A; RS32SET & RD32          { update_sub(RD32, RS32SET); }
+# like, comment & subscribe
+:subs "#1",     RD32 is op=0x1B; op_lo=0x0 & RD32        { RD32 = RD32 - 1; }
+:subs "#2",     RD32 is op=0x1B; op_lo=0x8 & RD32        { RD32 = RD32 - 2; }
+:subs "#4",     RD32 is op=0x1B; op_lo=0x9 & RD32        { RD32 = RD32 - 4; }
+
+:cmp.w IMM16, RD16 is op=0x79; op_lo=0x2 & RD16; IMM16 {
+	local r = RD16;
+	update_sub(r, IMM16);
+}
+
+:cmp.l IMM32, RD32 is op=0x7A; op_lo=0x2 & RD32; IMM32 {
+	local r = RD32;
+	update_sub(r, IMM32);
+}
+
+:cmp.l RS32SET, RD32 is op=0x1F; RS32SET & RD32 {
+	local r = RD32;
+	update_sub(r, RS32SET);
+}
+
+:dec.w "#1", RD16 is op=0x1B; op_lo=0x5 & RD16 { update_sub(RD16, 1:2); }
+:dec.w "#2", RD16 is op=0x1B; op_lo=0xD & RD16 { update_sub(RD16, 2:2); }
+:dec.l "#1", RD32 is op=0x1B; op_lo=0x7 & RD32 { update_sub(RD32, 1:4); }
+:dec.l "#2", RD32 is op=0x1B; op_lo=0xF & RD32 { update_sub(RD32, 2:4); }
+
+:inc.w "#1", RD16 is op=0x0B; op_lo=0x5 & RD16 { update_add(RD16, 1); }
+:inc.w "#2", RD16 is op=0x0B; op_lo=0xD & RD16 { update_add(RD16, 2); }
+:inc.l "#1", RD32 is op=0x0B; op_lo=0x7 & RD32 { update_add(RD32, 1); }
+:inc.l "#2", RD32 is op=0x0B; op_lo=0xF & RD32 { update_add(RD32, 2); }
+
+:neg.w RD16 is op=0x17; op_lo=0x9 & RD16 {
+	update_sub3(RD16, RD16, RD16);
+	$(V) = (RD16 == (1 << 15));
+}
+
+:neg.l RD32 is op=0x17; op_lo=0xB & RD32 {
+	update_sub3(RD32, RD32, RD32);
+	$(V) = (RD32 == (1 << 31));
+}
+
+
+:divxs RS8, RD16 is op24=0x01D051; RS8 & RD16 {
+	local d:2 = sext(RS8);
+	RD16 = (RD16 s/ d) | ((RD16 s% d) << 8);
+	$(Z) = (d == 0);
+	$(N) = (RD16 s< 0);
+}
+
+:divxs RS16, RD32 is op24=0x01D053; RS16 & RD32 {
+	local d:4 = sext(RS16);
+	RD32 = (RD32 s/ d) | ((RD32 s% d) << 16);
+	$(Z) = (d == 0);
+	$(N) = (RD32 s< 0);
+}
+
+:divxu RS16, RD32 is op=0x53; RS16 & RD32 {
+	local d:4 = zext(RS16);
+	RD32 = (RD32 / d) | ((RD32 % d) << 16);
+	$(Z) = (d == 0);
+	$(N) = (RS16 s< 0);
+}
+
+:mulxs.b RS8, RD16 is op24=0x01C050; RS8 & RD16 {
+	RD16 = sext(RD16:1 * RS8);
+	update_ZNV(RD16);
+}
+
+:mulxs.w RS16, RD32 is op24=0x01C052; RS16 & RD32 {
+	RD32 = sext(RD32:2 * RS16);
+	update_ZNV(RD32);
+}
+
+:mulxu.w RS16, RD32 is op=0x52; RS16 & RD32 {
+	RD32 = zext(RD32:2 * RS16);
+	update_ZNV(RD32);
+}

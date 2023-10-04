@@ -1,0 +1,64 @@
+@include "h8-insn-300.sinc"
+
+
+# Meanings
+
+RD32:    rd32 is rd32 & bit_hi=0 { export rd32; }
+RS32:    rs32 is rs32 & bit_lo=0 { export rs32; }
+RS32SET: rs32 is rs32 & bit_lo=1 { export rs32; }
+
+IMM2:     "#"^dit_lohi^":2" is dit_lohi { local c:1 = dit_lohi; export c; }
+DISP24:   imm24^":24"       is imm24    { local c:$(ADDRSIZE); extdisp24(c, imm24:3); export c; }
+IMM32:    "#"^imm32         is imm32    { local c:4 = imm32; export c; }
+
+RELPTR16: addr            is simm16 [ addr = inst_next + simm16; ] { export *[ram]:$(ADDRSIZE) addr; }
+PTR16D:   "@"^addr^":32"  is imm16 [ addr = 0 + imm16; ] { export *[ram]:4 addr; }
+PTR24:    "@"^addr^":24"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:$(ADDRSIZE) addr; }
+PTR24B:   "@"^addr^":8"   is imm24 [ addr = 0 + imm24; ] { export *[ram]:1 addr; }
+PTR24W:   "@"^addr^":16"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:2 addr; }
+PTR24D:   "@"^addr^":32"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:4 addr; }
+
+RSPTRD:    "@"^rsA^":32"  is rsA & bit_lo=0 { export *:4 rsA; }
+RSPTRSD:   "@"^rsA^":32"  is rsA & bit_lo=1 { export *:4 rsA; }
+RSPTRINCD: "@"^rsA^"+:32" is rsA & bit_lo=0 { local v = rsA; rsA = rsA + 4; export *:4 v; }
+RSPTRDECD: "@-"^rsA^":32" is rsA & bit_lo=1 { rsA = rsA - 4; export *:4 rsA; }
+
+
+# Instructions
+
+@include "h8-insn-300h-arith.sinc"
+@include "h8-insn-300h-bit.sinc"
+@include "h8-insn-300h-branch.sinc"
+@include "h8-insn-300h-mem.sinc"
+
+LDC_PTR: RSPTRW is op=0x69; RSPTRW & nib_hi=0 { export RSPTRW; }
+LDC_PTR: RSPTRINCW is op=0x6D; RSPTRINCW & nib_hi=0 { export RSPTRINCW; }
+LDC_PTR: PTR16W is op16=0x6B00; PTR16W { export PTR16W; }
+LDC_PTR: PTR24W is op24=0x6B2000; PTR24W { export PTR24W; }
+
+:ldc.w LDC_PTR, "ccr" is op16=0x0140; LDC_PTR {
+	ccr = LDC_PTR:1;
+}
+
+LDC_ADDR: "@("^DISP16^","^RSA^")" is op=0x6F; RSA & nib_hi=0; DISP16 { local addr = RSA:$(ADDRSIZE) + DISP16; export addr; }
+LDC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6B2000; DISP24 { local addr = RSA:$(ADDRSIZE) + DISP24; export addr; }
+
+:ldc.w LDC_ADDR, "ccr" is op16=0x0140; LDC_ADDR {
+	ccr = *LDC_ADDR;
+}
+
+STC_PTR: RSPTRSW is op=0x69; RSPTRSW & nib_hi=0 { export RSPTRSW; }
+STC_PTR: RSPTRDECW is op=0x6D; RSPTRDECW & nib_hi=0 { export RSPTRDECW; }
+STC_PTR: PTR16W is op16=0x6B80; PTR16W { export PTR16W; }
+STC_PTR: PTR24W is op24=0x6BA000; PTR24W { export PTR24W; }
+
+:stc.w "ccr", STC_PTR is op16=0x0140; STC_PTR {
+	STC_PTR = zext(ccr);
+}
+
+STC_ADDR: "@("^DISP16^","^RSASET^")" is op=0x6F; RSASET & nib_hi=0; DISP16 { local addr = RSASET:$(ADDRSIZE) + DISP16; export addr; }
+STC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6BA000; DISP24 { local addr = RSA:$(ADDRSIZE) + DISP24; export addr; }
+
+:stc.w "ccr", STC_ADDR is op16=0x140; STC_ADDR {
+	*STC_ADDR = ccr;
+}

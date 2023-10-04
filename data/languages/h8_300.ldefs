@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Ref: https://github.com/NationalSecurityAgency/ghidra/blob/Ghidra_10.4_build/Ghidra/Framework/SoftwareModeling/data/languages/language_definitions.rxg -->
+<language_definitions>
+	<language id="h8_300h:BE:32:normal" processor="H8/300H" endian="big" size="32"
+	          version="0.1" variant="normal"
+		  slafile="h8_300h_normal.sla" processorspec="h8_300h_normal.pspec">
+		<description>Hitachi H8/300H (normal mode)</description>
+		<compiler name="default" spec="h8_300h_normal.cspec" id="default" />
+	</language>
+	<language id="h8_300h:BE:32:advanced" processor="H8/300H" endian="big" size="32"
+	          version="0.1" variant="advanced"
+	          slafile="h8_300h_advanced.sla" processorspec="h8_300h_advanced.pspec">
+		<description>Hitachi H8/300H (advanced mode)</description>
+		<compiler name="default" spec="h8_300h_advanced.cspec" id="default" />
+	</language>
+</language_definitions>

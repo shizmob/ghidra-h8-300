@@ -1,0 +1,50 @@
+# Meanings
+
+CC_LO: "a"  is nib_lo=0b0000 { local c:1 = 1; export c; }
+CC_LO: "n"  is nib_lo=0b0001 { local c:1 = 0; export c; }
+CC_LO: "hi" is nib_lo=0b0010 { local c:1 = ($(C) == 0) && ($(Z) == 0); export c; }
+CC_LO: "ls" is nib_lo=0b0011 { local c:1 = ($(C) == 1) || ($(Z) == 1); export c; }
+CC_LO: "cc" is nib_lo=0b0100 { local c:1 = ($(C) == 0); export c; }
+CC_LO: "cs" is nib_lo=0b0101 { local c:1 = ($(C) == 1); export c; }
+CC_LO: "ne" is nib_lo=0b0110 { local c:1 = ($(Z) == 0); export c; }
+CC_LO: "eq" is nib_lo=0b0111 { local c:1 = ($(Z) == 1); export c; }
+CC_LO: "vc" is nib_lo=0b1000 { local c:1 = ($(V) == 0); export c; }
+CC_LO: "vs" is nib_lo=0b1001 { local c:1 = ($(V) == 1); export c; }
+CC_LO: "pl" is nib_lo=0b1010 { local c:1 = ($(N) == 0); export c; }
+CC_LO: "mi" is nib_lo=0b1011 { local c:1 = ($(N) == 1); export c; }
+CC_LO: "ge" is nib_lo=0b1100 { local c:1 = (($(N) == 1) ^ ($(V) == 1)) == 0; export c; }
+CC_LO: "lt" is nib_lo=0b1101 { local c:1 = ($(N) == 1) ^ ($(V) == 1); export c; }
+CC_LO: "gt" is nib_lo=0b1110 { local c:1 = ($(Z) == 0) && ((($(N) == 1) ^ ($(V) == 1)) == 0); export c; }
+CC_LO: "le" is nib_lo=0b1111 { local c:1 = ($(Z) == 1) || (($(N) == 1) ^ ($(V) == 1)); export c; }
+
+
+# Instructions
+
+:b^CC_LO RELPTR16 is op=0x58; CC_LO & nib_hi=0; RELPTR16 {
+	if (CC_LO)
+		goto RELPTR16;
+}
+
+:bsr RELPTR16 is op=0x5C; op=0x00; RELPTR16 {
+	pushcall(&:$(ADDRSIZE) inst_next);
+	call RELPTR16;
+}
+
+:trapa IMM2 is op=0x57; IMM2 & nib_hi=0 {
+	local addr:$(ADDRSIZE) = 0x20 + 4 * zext(IMM2);
+	pushtrap(&:$(ADDRSIZE) inst_next);
+	$(I) = 1;
+	call [addr];
+}
+
+# These two instructions override ones from the H8/300 that jumped to a 2-byte address,
+# but had a zero byte before the address -- these 3 bytes are used as an ADDR24
+# here in a backwards-compatible way. Sleigh allow the other instructions as a specialization of these ones.
+:jmp PTR24 is op=0x5A; PTR24 {
+	goto PTR24;
+}
+
+:jsr PTR24 is op=0x5E; PTR24 {
+	pushcall(&:$(ADDRSIZE) inst_next);
+	call PTR24;
+}

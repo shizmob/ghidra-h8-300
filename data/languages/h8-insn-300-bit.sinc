@@ -1,0 +1,221 @@
+# Macros
+
+macro sethi(val, b) {
+	# extend without triggering a compiler warning if size(val) == size
+	local nb = 1 >> (1 - b);
+	# 1 -> -1 -> 0xffff..ff
+	# 0 -> 0 -> 0
+	local bb = -nb;
+	# 0xffff..ff -> 0x8000..00
+	# 0 -> 0
+	local v = bb & ~(bb >> 1);
+	local m = (-1) & ~(-1 >> 1);
+	val = (val & ~m) | v;
+}
+macro setb(val, p, b) {
+	# extend without triggering a compiler warning if size(val) == size
+	local nb = 1 >> (1 - b);
+	local m = ~(1 << p);
+	val = (val & ~m) | (nb << p);
+}
+macro setlo(val, b) { setb(val, 0, b); }
+
+
+# Meanings
+
+BIT_INV: "" is bit_lo=0 { local c:1 = 0; export c; }
+BIT_INV: "i" is bit_lo=1 { local c:1 = 1; export c; }
+
+BIT_IMM3: IMM3 is IMM3 & nib_hi=0 { export IMM3; }
+BIT_RS8: RS8 is RS8 & nib_hi=0 { export RS8; }
+BIT_PTR8: PTR8B is PTR8B { export PTR8B; }
+BIT_RSPTRB: RSPTRB is RSPTRB & nib_hi=0 { export RSPTRB; }
+
+
+# Instructions
+
+macro instr_and(dest, src) {
+	dest = dest & src;
+	update_ZNV(dest);
+}
+
+macro instr_not(dest) {
+	dest = ~dest;
+	update_ZNV(dest);
+}
+
+macro instr_or(dest, src) {
+	dest = dest | src;
+	update_ZNV(dest);
+}
+
+macro instr_xor(dest, src) {
+	dest = dest ^ src;
+	update_ZNV(dest);
+}
+
+:and.b IMM8, RD8   is op_lo=0xE & RD8; IMM8    { instr_and(RD8, IMM8); }
+:and.b RS8,  RD8   is op=0x16; RS8 & RD8       { instr_and(RD8, RS8); }
+:andc  IMM8, "ccr" is op=0x06; IMM8            { ccr = ccr & IMM8; }
+:or.b  IMM8, RD8   is op_lo=0xC & RD8; IMM8    { instr_or(RD8, IMM8); }
+:or.b  RS8,  RD8   is op=0x14; RS8 & RD8       { instr_or(RD8, RS8); }
+:orc   IMM8, "ccr" is op=0x04; IMM8            { ccr = ccr | IMM8; }
+:not.b RD8         is op=0x17; op_lo=0x0 & RD8 { instr_not(RD8); }
+:xor.b IMM8, RD8   is op_lo=0xD & RD8; IMM8    { instr_xor(RD8, IMM8); }
+:xor.b RS8,  RD8   is op=0x15; RS8 & RD8       { instr_xor(RD8, RS8); }
+:xorc  IMM8, "ccr" is op=0x05; IMM8            { ccr = ccr ^ IMM8; }
+
+macro instr_bit_clear(dest, bit) {
+	local v:1 = dest;
+	dest = v & ~(1 << (bit & 0b111));
+}
+
+:bclr IMM3,     RD8        is op=0x72; bit_lo=0 & IMM3 & RD8         { instr_bit_clear(RD8, IMM3); }
+:bclr BIT_IMM3, BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x72; bit_lo=0 & BIT_IMM3 { instr_bit_clear(BIT_RSPTRB, BIT_IMM3); }
+:bclr RS8,      RD8        is op=0x62; RS8 & RD8                     { instr_bit_clear(RD8, RS8); }
+:bclr BIT_IMM3, BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x72; bit_lo=0 & BIT_IMM3  { instr_bit_clear(BIT_PTR8, BIT_IMM3); }
+:bclr BIT_RS8,  BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x62; BIT_RS8  { instr_bit_clear(BIT_RSPTRB, BIT_RS8); }
+:bclr BIT_RS8,  BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x62; BIT_RS8   { instr_bit_clear(BIT_PTR8, BIT_RS8); }
+
+macro instr_bit_not(dest, bit) {
+	local v:1 = dest;
+	dest = v ^ (1 << (bit & 0b111));
+}
+
+:bnot IMM3,     RD8        is op=0x71; bit_lo=0 & IMM3 & RD8         { instr_bit_not(RD8, IMM3); }
+:bnot BIT_IMM3, BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x71; BIT_IMM3 { instr_bit_not(BIT_RSPTRB, BIT_IMM3); }
+:bnot RS8,      RD8        is op=0x61; RS8 & RD8                     { instr_bit_not(RD8, RS8); }
+:bnot BIT_IMM3, BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x71; BIT_IMM3  { instr_bit_not(BIT_PTR8, BIT_IMM3); }
+:bnot BIT_RS8,  BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x61; BIT_RS8  { instr_bit_not(BIT_RSPTRB, BIT_RS8); }
+:bnot BIT_RS8,  BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x61; BIT_RS8   { instr_bit_not(BIT_PTR8, BIT_RS8); }
+
+macro instr_bit_set(dest, bit) {
+	local v:1 = dest;
+	dest = v | (1 << (bit & 0b111));
+}
+
+:bset IMM3,     RD8        is op=0x70; bit_lo=0 & IMM3 & RD8         { instr_bit_set(RD8, IMM3); }
+:bset BIT_IMM3, BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x70; BIT_IMM3 { instr_bit_set(BIT_RSPTRB, BIT_IMM3); }
+:bset RS8,      RD8        is op=0x60; RS8 & RD8                     { instr_bit_set(RD8, RS8); }
+:bset BIT_IMM3, BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x70; BIT_IMM3  { instr_bit_set(BIT_PTR8, BIT_IMM3); }
+:bset BIT_RS8,  BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x60; BIT_RS8  { instr_bit_set(BIT_RSPTRB, BIT_RS8); }
+:bset BIT_RS8,  BIT_PTR8   is op=0x7F; BIT_PTR8; op=0x60; BIT_RS8    { instr_bit_set(BIT_PTR8, BIT_RS8); }
+
+macro instr_bit_test(val, bit) {
+	local v:1 = val;
+	$(Z) = (v >> (bit & 0b111)) & 1;
+}
+
+:btst IMM3,     RD8        is op=0x73; bit_lo=0 & IMM3 & RD8         { instr_bit_test(RD8, IMM3); }
+:btst BIT_IMM3, BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x73; BIT_IMM3 { instr_bit_test(BIT_RSPTRB, BIT_IMM3); }
+:btst RS8,      RD8        is op=0x63; RS8 & RD8                     { instr_bit_test(RD8, RS8); }
+:btst BIT_IMM3, BIT_PTR8   is op=0x7E; BIT_PTR8; op=0x73; BIT_IMM3  { instr_bit_test(BIT_PTR8, BIT_IMM3); }
+:btst BIT_RS8,  BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x63; BIT_RS8  { instr_bit_test(BIT_RSPTRB, BIT_RS8); }
+:btst BIT_RS8,  BIT_PTR8   is op=0x7E; BIT_PTR8; op=0x63; BIT_RS8   { instr_bit_test(BIT_PTR8, BIT_RS8); }
+
+macro instr_bit_and(val, bit, inv) {
+	local v:1 = val;
+	$(C) = (((v >> bit) & 1) != inv) & $(C);
+}
+
+:b^BIT_INV^"and" IMM3,     RD8        is op=0x76; BIT_INV & IMM3 & RD8 { instr_bit_and(RD8, IMM3, BIT_INV); }
+:b^BIT_INV^"and" BIT_IMM3, BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x76; BIT_INV & BIT_IMM3 { instr_bit_and(BIT_RSPTRB, BIT_IMM3, BIT_INV); }
+:b^BIT_INV^"and" BIT_IMM3, BIT_PTR8  is op=0x7E; BIT_PTR8; op=0x76; BIT_INV & BIT_IMM3  { instr_bit_and(BIT_PTR8, BIT_IMM3, BIT_INV); }
+
+macro instr_bit_or(val, bit, inv) {
+	local v:1 = val;
+	$(C) = (((v >> bit) & 1) != inv) | $(C);
+}
+
+:b^BIT_INV^"or" IMM3,     RD8        is op=0x74; BIT_INV & IMM3 & RD8 { instr_bit_or(RD8, IMM3, BIT_INV); }
+:b^BIT_INV^"or" BIT_IMM3, BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x74; BIT_INV & BIT_IMM3 { instr_bit_or(BIT_RSPTRB, BIT_IMM3, BIT_INV); }
+:b^BIT_INV^"or" BIT_IMM3, BIT_PTR8   is op=0x7E; BIT_PTR8; op=0x74; BIT_INV & BIT_IMM3  { instr_bit_or(BIT_PTR8, BIT_IMM3, BIT_INV); }
+
+macro instr_bit_xor(val, bit, inv) {
+	local v:1 = val;
+	$(C) = (((v >> bit) & 1) != inv) ^ $(C);
+}
+
+:b^BIT_INV^"xor" IMM3,     RD8        is op=0x75; BIT_INV & IMM3 & RD8 { instr_bit_xor(RD8, IMM3, BIT_INV); }
+:b^BIT_INV^"xor" BIT_IMM3, BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x75; BIT_INV & BIT_IMM3 { instr_bit_xor(BIT_RSPTRB, BIT_IMM3, BIT_INV); }
+:b^BIT_INV^"xor" BIT_IMM3, BIT_PTR8   is op=0x7E; BIT_PTR8; op=0x75; BIT_INV & BIT_IMM3  { instr_bit_xor(BIT_PTR8, BIT_IMM3, BIT_INV); }
+
+macro instr_bit_load(val, bit, inv) {
+	local v:1 = val;
+	$(C) = ((v >> bit) & 1) != inv;	
+}
+
+:b^BIT_INV^"ld" IMM3,     RD8        is op=0x77; BIT_INV & IMM3 & RD8 { instr_bit_load(RD8, IMM3, BIT_INV); }
+:b^BIT_INV^"ld" BIT_IMM3, BIT_RSPTRB is op=0x7C; BIT_RSPTRB; op=0x77; BIT_INV & BIT_IMM3 { instr_bit_load(BIT_RSPTRB, BIT_IMM3, BIT_INV); }
+:b^BIT_INV^"ld" BIT_IMM3, BIT_PTR8   is op=0x7E; BIT_PTR8; op=0x77; BIT_INV & BIT_IMM3  { instr_bit_load(BIT_PTR8, BIT_IMM3, BIT_INV); }
+
+macro instr_bit_store(dest, bit, inv) {
+	local m:1 = ~(1 << bit);
+	local x:1 = ($(C) != inv) << bit;
+	local v:1 = dest;
+	dest = (v & m) | x;
+}
+
+:b^BIT_INV^"st" IMM3,     RD8          is op=0x67; BIT_INV & IMM3 & RD8 { instr_bit_store(RD8, IMM3, BIT_INV); }
+:b^BIT_INV^"st" BIT_IMM3, BIT_RSPTRB is op=0x7D; BIT_RSPTRB; op=0x67; BIT_INV & BIT_IMM3 { instr_bit_store(BIT_RSPTRB, BIT_IMM3, BIT_INV); }
+:b^BIT_INV^"st" BIT_IMM3, BIT_PTR8  is op=0x7F; BIT_PTR8; op=0x67; BIT_INV & BIT_IMM3  { instr_bit_store(BIT_PTR8, BIT_IMM3, BIT_INV); }
+
+macro instr_rotl(val) {
+	$(C) = val s< 0;
+	val = (val << 1);
+	setlo(val, $(C));
+}
+
+macro instr_rotxl(val) {
+	local c = $(C);
+	$(C) = val s< 0;
+	val = (val << 1);
+	setlo(val, c);
+}
+
+macro instr_rotr(val) {
+	$(C) = (val & 1) != 0;
+	val = (val >> 1);
+	sethi(val, $(C));
+}
+
+macro instr_rotxr(val) {
+	local c = $(C);
+	$(C) = (val & 1) != 0;
+	val = (val >> 1);
+	sethi(val, c);
+}
+
+macro instr_shift_left(val) {
+	$(C) = val s< 0;
+	val = val << 1;
+	update_ZNV(val);
+}
+
+macro instr_shift_aleft(val) {
+	local old = val;
+	instr_shift_left(val);
+	$(V) = old > val;
+}
+
+macro instr_shift_right(val) {
+	$(C) = (val & 1) != 0;
+	val = val >> 1;
+	update_ZNV(val);
+}
+
+macro instr_shift_aright(val) {
+	local c = val s< 0;
+	instr_shift_right(val);
+	sethi(val, zext(c));
+	$(N) = c;
+}
+
+:rotxl.b RD8 is op=0x12; op_lo=0x0 & RD8 { instr_rotxl(RD8); }
+:rotl.b  RD8 is op=0x12; op_lo=0x8 & RD8 { instr_rotl(RD8); }
+:rotxr.b RD8 is op=0x13; op_lo=0x0 & RD8 { instr_rotxr(RD8); }
+:rotr.b  RD8 is op=0x13; op_lo=0x8 & RD8 { instr_rotr(RD8); }
+:shll.b  RD8 is op=0x10; op_lo=0x0 & RD8 { instr_shift_left(RD8); }
+:shal.b  RD8 is op=0x10; op_lo=0x8 & RD8 { instr_shift_aleft(RD8); }
+:shlr.b  RD8 is op=0x11; op_lo=0x0 & RD8 { instr_shift_right(RD8); }
+:shar.b  RD8 is op=0x11; op_lo=0x8 & RD8 { instr_shift_aright(RD8); }

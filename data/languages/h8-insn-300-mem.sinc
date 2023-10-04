@@ -1,0 +1,86 @@
+# Macros
+
+macro push16(val)    { push(val, 2); }
+macro pop16(dest)    { pop(dest, 2); }
+
+
+# Instructions
+
+:eepmov is op16=0x7B5C; op16=0x598F {
+	if (r4l == 0)
+		goto inst_next;
+
+	local s = $(REG_SRC):$(ADDRSIZE);
+	local d = $(REG_DST):$(ADDRSIZE);
+	<loop>
+	if (r4l == 0)
+		goto <done>;
+	local v:1 = *s;
+	*d = v;
+	s = s + 1;
+	d = d + 1;
+	r4l = r4l - 1;
+	goto <loop>;
+
+	<done>
+	$(REG_SRC) = zext(s);
+	$(REG_DST) = zext(d);
+}
+
+macro instr_mov(dest, src) {
+	dest = src;
+	update_ZNV(dest);
+}
+
+macro instr_movp(dest, src) {
+	*dest = src;
+	update_ZNV(src);
+}
+
+:mov.b RS8,  RD8  is op=0x0C; RS8 & RD8   { instr_mov(RD8, RS8); }
+:mov.w RS16, RD16 is op=0x0D; RS16 & RD16 { instr_mov(RD16, RS16); }
+
+:mov.b IMM8,       RD8 is op_lo=0xF & RD8; IMM8     { instr_mov(RD8, IMM8); }
+:mov.b RSPTRB,     RD8 is op=0x68; RSPTRB & RD8     { instr_mov(RD8, RSPTRB); }
+:mov.b RSPTRINCB,  RD8 is op=0x6C; RSPTRINCB & RD8  { instr_mov(RD8, RSPTRINCB); }
+:mov.b PTR8B,      RD8 is op_lo=0x2 & RD8; PTR8B    { instr_mov(RD8, PTR8B); }
+:mov.b PTR16B,     RD8 is op=0x6A; op_lo=0x0 & RD8; PTR16B { instr_mov(RD8, PTR16B); }
+
+MOVBDISP16SRC: "@("^DISP16^","^RSADDR^")" is RSADDR; DISP16 { local addr = RSADDR + DISP16; export *:1 addr; }	
+:mov.b MOVBDISP16SRC, RD8 is op=0x6E; RD8 ... & MOVBDISP16SRC { instr_mov(RD8, MOVBDISP16SRC); }
+
+:mov.b RD8, RSPTRSB    is op=0x68; RSPTRSB & RD8  { instr_mov(RSPTRSB, RD8); }
+:mov.b RD8, RSPTRDECB  is op=0x6C; RSPTRDECB & RD8 { instr_mov(RSPTRDECB, RD8); }
+:mov.b RD8, PTR8B      is op_lo=0x3 & RD8; PTR8B    { instr_mov(PTR8B, RD8); }
+:mov.b RD8, PTR16B     is op=0x6A; op_lo=0x8 & RD8; PTR16B { instr_mov(PTR16B, RD8); }
+
+MOVBDISP16DST: "@("^DISP16^":16,"^RSADDRSET^")" is RSADDRSET; DISP16 { local addr = RSADDRSET + DISP16; export *:1 addr; }
+:mov.b RD8, MOVBDISP16DST is op=0x6E; RD8 ... & MOVBDISP16DST { instr_mov(MOVBDISP16DST, RD8); }
+
+:mov.w IMM16,  RD16      is op=0x79; nib_lo=0 & RD16; IMM16   { instr_mov(RD16, IMM16); }
+:mov.w PTR16W, RD16      is op=0x6B; op_lo=0x0 & RD16; PTR16W { instr_mov(RD16, PTR16W); }
+:mov.w RSPTRW, RD16      is op=0x69; RSPTRW & RD16            { instr_mov(RD16, RSPTRW); }
+:mov.w RSPTRINCW, RD16   is op=0x7D; RSPTRINCW & RD16         { instr_mov(RD16, RSPTRINCW); }
+
+MOVWDISP16SRC: "@("^DISP16^","^RSADDR^")" is RSADDR; DISP16 { local addr = RSADDR + DISP16; export *:2 addr; }	
+:mov.w MOVWDISP16SRC, RD16 is op=0x6F; RD16 ... & MOVWDISP16SRC { instr_mov(RD16, MOVWDISP16SRC); }
+
+:mov.w RD16, RSPTRSW     is op=0x69; RSPTRSW & RD16         { instr_mov(RSPTRSW, RD16); }
+:mov.w RD16, RSPTRDECW   is op=0x6D; RSPTRDECW & RD16       { instr_mov(RSPTRDECW, RD16); }
+:mov.w RD16, PTR16W      is op=0x6B; op_lo=0x8 & RD16; PTR16W { instr_mov(PTR16W, RD16); }
+
+MOVWDISP16DST: "@("^DISP16^":16,"^RSADDRSET^")" is RSADDRSET; DISP16 { local addr = RSADDRSET + DISP16; export *:2 addr; }
+:mov.w RD16, MOVWDISP16DST is op=0x6F; RD16 ... & MOVWDISP16DST { instr_mov(MOVWDISP16DST, RD16); }
+
+:movfpe PTR16B, RD8 is op=0x6A; op_lo=0x4 & RD8; PTR16B { instr_mov(RD8, PTR16B); }
+:movtpe RD8, PTR16B is op=0x6A; op_lo=0xC & RD8; PTR16B { instr_mov(PTR16B, RD8); }
+
+:pop.w RD16 is op=0x6D; op_lo=0x7 & RD16 {
+	pop16(RD16);
+	update_ZNV(RD16);
+}
+
+:push.w RD16 is op=0x6D; op_lo=0xF & RD16 {
+	push16(RD16);
+	update_ZNV(RD16);
+}

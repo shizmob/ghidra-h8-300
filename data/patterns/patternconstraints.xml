@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<patternconstraints>
+	<language id="h8_300h:*:*:*">
+		<patternfile>h8_300h_patterns.xml</patternfile>
+	</language>
+	<language id="h8s_2x00:*:*:*">
+		<patternfile>h8_300h_patterns.xml</patternfile>
+	</language>
+</patternconstraints>

@@ -1,0 +1,54 @@
+# Instructions
+
+:and.w IMM16, RD16 is op=0x79; op_lo=0x6 & RD16; IMM16 { instr_and(RD16, IMM16); }
+:and.w RS16,  RD16 is op=0x66; RS16 & RD16             { instr_and(RD16, RS16); }
+:and.l IMM32, RD32 is op=0x7A; op_lo=0x6 & RD32; IMM32 { instr_and(RD32, IMM32); }
+:and.l RS32,  RD32 is op24=0x01F066; RS32 & RD32       { instr_and(RD32, RS32); }
+:not.w RD16 is op=0x17; op_lo=0x1 & RD16               { instr_not(RD16); }
+:not.l RD32 is op=0x17; op_lo=0x3 & RD32               { instr_not(RD32); }
+:or.w  IMM16, RD16 is op=0x79; op_lo=0x4 & RD16; IMM16 { instr_or(RD16, IMM16); }
+:or.w  RS16,  RD16 is op=0x64; RS16 & RD16             { instr_or(RD16, RS16); }
+:or.l  IMM32, RD32 is op=0x7A; op_lo=0x4 & RD32; IMM32 { instr_or(RD32, IMM32); }
+:or.l  RS32,  RD32 is op24=0x01F064; RS32 & RD32       { instr_or(RD32, RS32); }
+:xor.w IMM16, RD16 is op=0x79; op_lo=0x5 & RD16; IMM16 { instr_xor(RD16, IMM16); }
+:xor.w RS16,  RD16 is op=0x65; RS16 & RD16             { instr_xor(RD16, RS16); }
+:xor.l IMM32, RD32 is op=0x7A; op_lo=0x5 & RD32; IMM32 { instr_xor(RD32, IMM32); }
+:xor.l RS32,  RD32 is op24=0x01F065; RS32 & RD32       { instr_xor(RD32, RS32); }
+
+:exts.w RD16 is op=0x17; op_lo=0xD & RD16 {
+	RD16 = sext(RD16:1);
+	update_ZNV(RD16);
+}
+
+:exts.l RD32 is op=0x17; op_lo=0xF & RD32 {
+	RD32 = sext(RD32:2);
+	update_ZNV(RD32);
+}
+
+:extu.w RD16 is op=0x17; op_lo=0x5 & RD16 {
+	RD16 = zext(RD16:1);
+	update_ZNV(RD16);
+}
+
+:extu.l RD32 is op=0x17; op_lo=0x7 & RD32 {
+	RD32 = zext(RD32:2);
+	update_ZNV(RD32);
+}
+
+:rotxl.w RD16 is op=0x12; op_lo=0x1 & RD16 { instr_rotxl(RD16); }
+:rotl.w  RD16 is op=0x12; op_lo=0x9 & RD16 { instr_rotl(RD16); }
+:rotxr.w RD16 is op=0x13; op_lo=0x1 & RD16 { instr_rotxr(RD16); }
+:rotl.w  RD16 is op=0x13; op_lo=0x9 & RD16 { instr_rotr(RD16); }
+:rotxl.l RD32 is op=0x12; op_lo=0x3 & RD32 { instr_rotxl(RD32); }
+:rotl.l  RD32 is op=0x12; op_lo=0xB & RD32 { instr_rotl(RD32); }
+:rotxr.l RD32 is op=0x13; op_lo=0x3 & RD32 { instr_rotxr(RD32); }
+:rotl.l  RD32 is op=0x13; op_lo=0xB & RD32 { instr_rotr(RD32); }
+
+:shll.w RD16 is op=0x10; op_lo=0x1 & RD16 { instr_shift_left(RD16); }
+:shal.w RD16 is op=0x10; op_lo=0x9 & RD16 { instr_shift_aleft(RD16); }
+:shlr.w RD16 is op=0x11; op_lo=0x1 & RD16 { instr_shift_right(RD16); } 
+:shar.w RD16 is op=0x11; op_lo=0x9 & RD16 { instr_shift_aright(RD16); }
+:shll.l RD32 is op=0x10; op_lo=0x3 & RD32 { instr_shift_left(RD32); }
+:shal.l RD32 is op=0x10; op_lo=0xB & RD32 { instr_shift_aleft(RD32); }
+:shlr.l RD32 is op=0x11; op_lo=0x3 & RD32 { instr_shift_right(RD32); }
+:shar.l RD32 is op=0x11; op_lo=0xB & RD32 { instr_shift_aright(RD32); }

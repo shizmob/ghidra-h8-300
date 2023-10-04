@@ -1,0 +1,135 @@
+@define C  "ccr[0,1]"
+@define V  "ccr[1,1]"
+@define Z  "ccr[2,1]"
+@define N  "ccr[3,1]"
+@define U  "ccr[4,1]"
+@define H  "ccr[5,1]"
+@define UI "ccr[6,1]"
+@define I  "ccr[7,1]"
+
+
+# Macros
+
+macro update_ZN(val) {
+	$(Z) = (val == 0);
+	$(N) = (val s< 0);
+}
+macro update_ZNV(val) {
+	update_ZN(val);
+	$(V) = 0;
+}
+
+macro seek(n) {
+	sp = sp - n;
+}
+macro push(val, n) {
+	seek(n);
+	*sp = val;
+}
+macro skip(n) {
+	sp = sp + n;
+}
+macro pop(dest, n) {
+	dest = *sp;
+	skip(n);
+}
+
+macro push8(val)     { push(val, 1); }
+macro pop8(dest)     { pop(dest, 1); }
+
+@if ADDRSIZE == "2"
+macro extaddr16(dest, val) {
+	dest = val;
+}
+macro extdisp16(dest, val) {
+	dest = val;
+}
+macro extdisp24(dest, val) {
+	local d = val;
+	dest = d:2;
+}
+@else
+macro extaddr16(dest, val) {
+	dest = zext(val);
+}
+macro extdisp16(dest, val) {
+	dest = sext(val);
+}
+@if ADDRSIZE == "3"
+macro extdisp24(dest, val) {
+	dest = val;
+}
+@else
+macro extdisp24(dest, val) {
+	dest = sext(val);
+}
+@endif
+@endif
+
+@ifdef ADDRDIFF
+macro extptr(dest, p) {
+	dest = p:$(ADDRSIZE);
+}
+@else
+macro extptr(dest, p) {
+	dest = p;
+}
+@endif
+
+
+# Meanings
+
+RS8:    rs8  is rs8            { export rs8; }
+RS16:   rs16 is rs16           { export rs16; }
+RD8:    rd8  is rd8            { export rd8; }
+RD16:   rd16 is rd16           { export rd16; }
+RSA:    rsA  is rsA & bit_lo=0 { export rsA; }
+RSASET: rsA  is rsA & bit_lo=1 { export rsA; }
+
+IMM3:     "#"^trip_lo^":3" is trip_lo { local c:1 = trip_lo; export c; }
+IMM8:     "#"^imm8^":8"    is imm8    { local c:1 = imm8; export c; }
+INDADDR8: "@@"^addr^":8"   is imm8    [ addr = 0 + imm8; ] { local daddr = *:$(PTRSIZE) addr:$(ADDRSIZE); local faddr:$(ADDRSIZE); extptr(faddr, daddr); export faddr; }
+IMM16:    "#"^imm16        is imm16   { local c:2 = imm16; export c; }
+DISP16:   imm16^":16"      is imm16   { local c:$(ADDRSIZE); extdisp16(c, imm16:2); export c; }
+
+RSADDR:      "@"^RSA      is RSA    { local raddr = RSA:$(ADDRSIZE); export raddr; }
+RSADDRSET:   "@"^RSASET   is RSASET { local raddr = RSASET:$(ADDRSIZE); export raddr; }
+
+RELPTR8: addr             is simm8 [ addr = inst_next + simm8; ] { export *[ram]:$(ADDRSIZE) addr; }
+PTR8B:   "@"^addr^":8"    is imm8  [ addr = 0xFFFF00 $or imm8; ] { export *[ram]:1 addr; }
+PTR16:   "@"^addr^":24"   is imm16 [ addr = 0 + imm16; ]         { export *[ram]:$(ADDRSIZE) addr; }
+PTR16B:  "@"^addr^":8"    is imm16 [ addr = 0 + imm16; ]         { export *[ram]:1 addr; }
+PTR16W:  "@"^addr^":16"   is imm16 [ addr = 0 + imm16; ]         { export *[ram]:2 addr; }
+
+RSPTR:     "@"^rsA        is rsA & bit_lo=0 { export *:$(ADDRSIZE) rsA; }      
+RSPTRB:    "@"^rsA^":8"   is rsA & bit_lo=0 { export *:1 rsA; }
+RSPTRW:    "@"^rsA^":16"  is rsA & bit_lo=0 { export *:2 rsA; }
+RSPTRSB:   "@"^rsA^":8"   is rsA & bit_lo=1 { export *:1 rsA; }
+RSPTRSW:   "@"^rsA^":16"  is rsA & bit_lo=1 { export *:2 rsA; }
+RSPTRINCB: "@"^rsA^"+:8"  is rsA & bit_lo=0 { local v = rsA; rsA = rsA + 1; export *:1 v; }
+RSPTRINCW: "@"^rsA^"+:16" is rsA & bit_lo=0 { local v = rsA; rsA = rsA + 2; export *:2 v; }
+RSPTRDECB: "@-"^rsA^":8"  is rsA & bit_lo=1 { rsA = rsA - 1; export *:1 rsA; }
+RSPTRDECW: "@-"^rsA^":16" is rsA & bit_lo=1 { rsA = rsA - 2; export *:2 rsA; }
+
+
+# Instructions
+
+@include "h8-insn-300-arith.sinc"
+@include "h8-insn-300-bit.sinc"
+@include "h8-insn-300-branch.sinc"
+@include "h8-insn-300-mem.sinc"
+
+:nop is op16=0x0000 {}
+:sleep is op16=0x0180 {}
+
+:ldc.b IMM8, "ccr" is op=0x07; IMM8 {
+	ccr = IMM8;
+}
+
+:ldc.b RD8, "ccr" is op=0x03; op_lo=0x0 & RD8 {
+	ccr = RD8;
+}
+
+:stc.b "ccr", RD8 is op=0x02; op_lo=0x0 & RD8 {
+	RD8 = ccr;
+}

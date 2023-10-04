@@ -1,0 +1,64 @@
+# Basics
+
+define endian=big;
+define alignment=2;
+
+define space ram type=ram_space size=$(ADDRSIZE) default;
+define space register type=register_space size=4;
+
+@if ADDRSIZE == "2"
+@define REG_R7 "sp"
+@elif ADDRSIZE == "3"
+define register offset=0x1D size=$(ADDRSIZE)
+	[ sp ];
+@define REG_R7 "r7"
+@endif
+
+define register offset=0x00 size=1
+	[ _ _ r0h r0l _ _ r1h r1l _ _ r2h r2l _ _ r3h r3l _ _ r4h r4l _ _ r5h r5l _ _ r6h r6l _ _ r7h r7l ccr ];
+define register offset=0x00 size=2
+	[ e0  r0      e1  r1      e2  r2      e3  r3      e4  r4      e5  r5      e6  r6      e7  $(REG_R7)   ];
+define register offset=0x00 size=4
+	[ er0         er1         er2         er3         er4         er5         er6         er7             ];
+define register offset=0x30 size=$(ADDRSIZE)
+	[ pc ];
+
+define token op_8(8)    op    = (0, 7);
+define token op_16(16)  op16  = (0, 15);
+define token imm_8(8)   imm8  = (0, 7)   simm8 = (0, 7) signed;
+define token imm_16(16) imm16 = (0, 15)  simm16 = (0, 15) signed;
+define token op_24(24)  op24  = (0, 23);
+define token op_32(32)  op32  = (0, 31);
+define token imm_24(24) imm24 = (0, 23)  simm24 = (0, 23) signed;
+define token imm_32(32) imm32 = (0, 31)  simm32 = (0, 31) signed;
+
+define token split(8)
+	nib_hi  = (0, 3)
+	rd8     = (0, 3)
+	rd16    = (0, 3)
+	rd32    = (0, 2)
+	rdA     = (0, 2)
+	trip_hi = (0, 2)
+	bit_hi  = (3, 3)
+	op_lo   = (4, 7)
+	nib_lo  = (4, 7)
+	rs8     = (4, 7)
+	rs16    = (4, 7)
+	rs32    = (4, 6)
+	rsA     = (4, 6)
+	trip_lo = (4, 6)
+	dit_lohi= (4, 5)
+	bit_lo  = (7, 7)
+;
+
+attach variables [ rs8 rd8 ]
+	[ r0h r1h r2h r3h r4h r5h r6h r7h r0l r1l r2l r3l r4l r5l r6l r7l ];
+attach variables [ rs16 rd16 ]
+	[ r0 r1 r2 r3 r4 r5 r6 $(REG_R7) e0 e1 e2 e3 e4 e5 e6 e7 ];
+attach variables [ rs32 rd32 rsA rdA ]
+	[ er0 er1 er2 er3 er4 er5 er6 er7 ];
+
+@define REG_SRC "er5"
+@define REG_DST "er6"
+
+@include "h8-insn-300h.sinc"
