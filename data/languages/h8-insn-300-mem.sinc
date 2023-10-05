@@ -60,7 +60,7 @@ MOVBDISP16DST: "@("^DISP16^":16,"^RSADDRSET^")" is RSADDRSET; DISP16 { local add
 :mov.w IMM16,  RD16      is op=0x79; nib_lo=0 & RD16; IMM16   { instr_mov(RD16, IMM16); }
 :mov.w PTR16W, RD16      is op=0x6B; op_lo=0x0 & RD16; PTR16W { instr_mov(RD16, PTR16W); }
 :mov.w RSPTRW, RD16      is op=0x69; RSPTRW & RD16            { instr_mov(RD16, RSPTRW); }
-:mov.w RSPTRINCW, RD16   is op=0x7D; RSPTRINCW & RD16         { instr_mov(RD16, RSPTRINCW); }
+:mov.w RSPTRINCW, RD16   is op=0x6D; RSPTRINCW & RD16         { instr_mov(RD16, RSPTRINCW); }
 
 MOVWDISP16SRC: "@("^DISP16^","^RSADDR^")" is RSADDR; DISP16 { local addr = RSADDR + DISP16; export *:2 addr; }	
 :mov.w MOVWDISP16SRC, RD16 is op=0x6F; RD16 ... & MOVWDISP16SRC { instr_mov(RD16, MOVWDISP16SRC); }
