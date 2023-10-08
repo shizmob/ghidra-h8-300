@@ -18,36 +18,38 @@ macro pop32(dest)    { pop(dest, 4); }
 	goto <loop>;
 }
 
+macro instr_movfromp(dest, src) {
+	update_ZNV(src);
+	*dest = src;
+}
 
-:mov.b "@("^DISP24^","^RSA^")", RD8 is op=0x78; RSA & nib_hi=0; op=0x6A; op_lo=0x2 & RD8; op=0x00; DISP24 { local addr = RSA + DISP24; instr_mov(RD8, *addr); }
-:mov.b PTR24B, RD8 is op=0x6A; op_lo=0x2 & RD8; op=0x00; PTR24B { instr_mov(RD8, PTR24B); }
+:mov.b "@("^DISP24^","^RSA^")", RD8 is op=0x78; RSA & nib_hi=0; op=0x6A; op_lo=0x2 & RD8; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movto(RD8, *addr); }
+:mov.b PTR24B, RD8 is op=0x6A; op_lo=0x2 & RD8; op=0x00; PTR24B { instr_movto(RD8, PTR24B); }
 
-:mov.b RD8, "@("^DISP24":24,"^RSA^")" is op=0x78; RSA & nib_hi=0; op=0x6A; op_lo=0xA & RD8; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movp(addr, RD8); }
-:mov.b RD8, PTR24B is op=0x6A; op_lo=0xA & RD8; op=0x00; PTR24B { instr_mov(PTR24B, RD8); }
+:mov.b RD8, "@("^DISP24":24,"^RSA^")" is op=0x78; RSA & nib_hi=0; op=0x6A; op_lo=0xA & RD8; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movfromp(addr, RD8); }
+:mov.b RD8, PTR24B is op=0x6A; op_lo=0xA & RD8; op=0x00; PTR24B { instr_movfrom(PTR24B, RD8); }
 
-:mov.w "@("^DISP24^","^RSA^")", RD16 is op=0x78; RSA & nib_hi=0; op=0x6B; op_lo=0x2 & RD16; op=0x00; DISP24 { local addr = RSA + DISP24; instr_mov(RD16, *addr); }
-:mov.w PTR24W, RD16 is op=0x6B; op_lo=0x2 & RD16; op=0x00; PTR24W { instr_mov(RD16, PTR24W); }
+:mov.w "@("^DISP24^","^RSA^")", RD16 is op=0x78; RSA & nib_hi=0; op=0x6B; op_lo=0x2 & RD16; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movto(RD16, *addr); }
+:mov.w PTR24W, RD16 is op=0x6B; op_lo=0x2 & RD16; op=0x00; PTR24W { instr_movto(RD16, PTR24W); }
 
-:mov.w RD16, "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op=0x6B; op_lo=0xA & RD16; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movp(addr, RD16); }
-:mov.w RD16, PTR24W is op=0x6B; op_lo=0xA & RD16; op=0x00; PTR24W { instr_mov(PTR24W, RD16); }
+:mov.w RD16, "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op=0x6B; op_lo=0xA & RD16; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movfromp(addr, RD16); }
+:mov.w RD16, PTR24W is op=0x6B; op_lo=0xA & RD16; op=0x00; PTR24W { instr_movfrom(PTR24W, RD16); }
 
-:mov.l RS32SET, RD32 is op=0x0F; RS32SET & RD32 { instr_mov(RD32, RS32SET); }
-:mov.l IMM32, RD32 is op=0x7A; nib_lo=0 & RD32; IMM32 { instr_mov(RD32, IMM32); }
-:mov.l RSPTRD, RD32 is op24=0x010069; RSPTRD & RD32 { instr_mov(RD32, RSPTRD); }
-:mov.l "@("^DISP16^","^RSA^")", RD32 is op24=0x01006F; RSA & RD32; DISP16 { local addr = RSA + DISP16; instr_mov(RD32, *addr); }
-:mov.l "@("^DISP24^","^RSA^")", RD32 is op24=0x010078; RSA & nib_hi=0; op=0x6B; op_lo=0x2 & RD32; op=0x00; DISP24 { local addr = RSA + DISP24; instr_mov(RD32, *addr); }
-:mov.l RSPTRINCD, RD32 is op24=0x01006D; RSPTRINCD & RD32 { instr_mov(RD32, RSPTRINCD); }
-:mov.l PTR16D, RD32 is op24=0x01006B; op_lo=0x0 & RD32; PTR16D { instr_mov(RD32, PTR16D); }
-:mov.l PTR24D, RD32 is op24=0x01006B; op_lo=0x2 & RD32; op=0x00; PTR24D { instr_mov(RD32, PTR24D); }
+:mov.l RS32SET, RD32 is op=0x0F; RS32SET & RD32 { instr_movto(RD32, RS32SET); }
+:mov.l IMM32, RD32 is op=0x7A; nib_lo=0 & RD32; IMM32 { instr_movto(RD32, IMM32); }
+:mov.l RSPTRD, RD32 is op24=0x010069; RSPTRD & RD32 { instr_movto(RD32, RSPTRD); }
+:mov.l "@("^DISP16^","^RSA^")", RD32 is op24=0x01006F; RSA & RD32; DISP16 { local addr = RSA + DISP16; instr_movto(RD32, *addr); }
+:mov.l "@("^DISP24^","^RSA^")", RD32 is op24=0x010078; RSA & nib_hi=0; op=0x6B; op_lo=0x2 & RD32; op=0x00; DISP24 { local addr = RSA + DISP24; instr_movto(RD32, *addr); }
+:mov.l RSPTRINCD, RD32 is op24=0x01006D; RSPTRINCD & RD32 { instr_movto(RD32, RSPTRINCD); }
+:mov.l PTR16D, RD32 is op24=0x01006B; op_lo=0x0 & RD32; PTR16D { instr_movto(RD32, PTR16D); }
+:mov.l PTR24D, RD32 is op24=0x01006B; op_lo=0x2 & RD32; op=0x00; PTR24D { instr_movto(RD32, PTR24D); }
 
-:mov.l RD32, RSPTRSD is op24=0x010069; RSPTRSD & RD32 { instr_mov(RSPTRSD, RD32); }
-:mov.l RD32, "@("^DISP16^","^RSASET^")" is op24=0x01006F; RSASET & RD32; DISP16 { local addr = RSASET:$(ADDRSIZE) + DISP16; instr_movp(addr, RD32); }
-:mov.l RD32, "@("^DISP24^","^RSASET^")" is op24=0x010078; RSASET & nib_hi=0; op=0x6B; op_lo=0xA & RD32; op=0x00; DISP24 { local addr = RSASET:$(ADDRSIZE) + DISP24; instr_movp(addr, RD32); }
-:mov.l RD32, "@("^DISP16^","^RSASET^")" is op24=0x01006F; RSASET & RD32; DISP16 { local addr = RSASET + DISP16; instr_movp(addr, RD32); }
-:mov.l RD32, "@("^DISP24^","^RSASET^")" is op24=0x010078; RSASET & nib_hi=0; op=0x6B; op_lo=0xA & RD32; op=0x00; DISP24 { local addr = RSASET + DISP24; instr_movp(addr, RD32); }
-:mov.l RD32, RSPTRDECD is op24=0x01006D; RSPTRDECD & RD32 { instr_mov(RSPTRDECD, RD32); }
-:mov.l RD32, PTR16D is op24=0x01006B; op_lo=0x8 & RD32; PTR16D { instr_mov(PTR16D, RD32); }
-:mov.l RD32, PTR24D is op24=0x01006B; op_lo=0xA & RD32; op=0x00; PTR24D { instr_mov(PTR24D, RD32); }
+:mov.l RD32, RSPTRSD is op24=0x010069; RSPTRSD & RD32 { instr_movfrom(RSPTRSD, RD32); }
+:mov.l RD32, "@("^DISP16^","^RSASET^")" is op24=0x01006F; RSASET & RD32; DISP16 { local addr = RSASET + DISP16; instr_movfromp(addr, RD32); }
+:mov.l RD32, "@("^DISP24^","^RSASET^")" is op24=0x010078; RSASET & nib_hi=0; op=0x6B; op_lo=0xA & RD32; op=0x00; DISP24 { local addr = RSASET + DISP24; instr_movfromp(addr, RD32); }
+:mov.l RD32, RSPTRDECD is op24=0x01006D; RSPTRDECD & RD32 { instr_movfrom(RSPTRDECD, RD32); }
+:mov.l RD32, PTR16D is op24=0x01006B; op_lo=0x8 & RD32; PTR16D { instr_movfrom(PTR16D, RD32); }
+:mov.l RD32, PTR24D is op24=0x01006B; op_lo=0xA & RD32; op=0x00; PTR24D { instr_movfrom(PTR24D, RD32); }
 
 :pop.l RD32 is op24=0x01006D; op_lo=0x7 & RD32 {
 	pop32(RD32);
@@ -55,6 +57,6 @@ macro pop32(dest)    { pop(dest, 4); }
 }
 
 :push.l RD32 is op24=0x01006D; op_lo=0xF & RD32 {
-	push32(RD32);
 	update_ZNV(RD32);
+	push32(RD32);
 }
