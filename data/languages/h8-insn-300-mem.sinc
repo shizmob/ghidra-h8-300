@@ -7,24 +7,15 @@ macro pop16(dest)    { pop(dest, 2); }
 # Instructions
 
 :eepmov is op16=0x7B5C; op16=0x598F {
-	if (r4l == 0)
-		goto inst_next;
-
-	local s = $(REG_SRC):$(ADDRSIZE);
-	local d = $(REG_DST):$(ADDRSIZE);
 	<loop>
 	if (r4l == 0)
-		goto <done>;
-	local v:1 = *s;
-	*d = v;
-	s = s + 1;
-	d = d + 1;
+		goto inst_next;
+	local v:1 = *$(REG_SRC);
+	*$(REG_DST) = v;
+	$(REG_SRC) = $(REG_SRC) + 1;
+	$(REG_DST) = $(REG_DST) + 1;
 	r4l = r4l - 1;
 	goto <loop>;
-
-	<done>
-	$(REG_SRC) = zext(s);
-	$(REG_DST) = zext(d);
 }
 
 macro instr_mov(dest, src) {

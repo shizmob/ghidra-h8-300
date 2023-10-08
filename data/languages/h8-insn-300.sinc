@@ -55,15 +55,9 @@ macro extaddr16(dest, val) {
 macro extdisp16(dest, val) {
 	dest = sext(val);
 }
-@if ADDRSIZE == "3"
-macro extdisp24(dest, val) {
-	dest = val;
-}
-@else
 macro extdisp24(dest, val) {
 	dest = sext(val);
 }
-@endif
 @endif
 
 @ifdef ADDRDIFF
@@ -88,12 +82,12 @@ RSASET: rsA  is rsA & bit_lo=1 { export rsA; }
 
 IMM3:     "#"^trip_lo^":3" is trip_lo { local c:1 = trip_lo; export c; }
 IMM8:     "#"^imm8^":8"    is imm8    { local c:1 = imm8; export c; }
-INDADDR8: "@@"^addr^":8"   is imm8    [ addr = 0 + imm8; ] { local daddr = *:$(PTRSIZE) addr:$(ADDRSIZE); local faddr:$(ADDRSIZE); extptr(faddr, daddr); export faddr; }
+INDADDR8: "@@"^addr^":8"   is imm8    [ addr = 0 + imm8; ] { local daddr = *:$(ADDRSIZE) addr:$(ADDRSIZE); export daddr; }
 IMM16:    "#"^imm16        is imm16   { local c:2 = imm16; export c; }
 DISP16:   imm16^":16"      is imm16   { local c:$(ADDRSIZE); extdisp16(c, imm16:2); export c; }
 
-RSADDR:      "@"^RSA      is RSA    { local raddr = RSA:$(ADDRSIZE); export raddr; }
-RSADDRSET:   "@"^RSASET   is RSASET { local raddr = RSASET:$(ADDRSIZE); export raddr; }
+RSADDR:      RSA      is RSA    { export RSA; }
+RSADDRSET:   RSASET   is RSASET { export RSASET; }
 
 RELPTR8: addr             is simm8 [ addr = inst_next + simm8; ] { export *[ram]:$(ADDRSIZE) addr; }
 PTR8B:   "@"^addr^":8"    is imm8  [ addr = 0xFFFF00 $or imm8; ] { export *[ram]:1 addr; }

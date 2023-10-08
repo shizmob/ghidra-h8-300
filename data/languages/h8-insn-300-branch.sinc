@@ -2,29 +2,28 @@
 
 macro pushcall(addr) {
 	push(addr, $(ADDRSIZE));
-@ifdef ADDRDIFF
-	push(0:$(ADDRDIFF), $(ADDRDIFF));
-@endif
 }
 macro popcall(dest)  {
-@ifdef ADDRDIFF
-	skip($(ADDRDIFF));
-@endif
 	pop(dest, $(ADDRSIZE));
 }
 macro pushtrap(addr) {
-	push(addr, $(ADDRSIZE));
 @ifndef ADDRDIFF
+	push(addr, $(ADDRSIZE) - 1);
+	push8(ccr);
+@else
+	push(addr, $(ADDRSIZE));
+	push8(ccr);
 	push8(ccr);
 @endif
-	push8(ccr);
 }
 macro poptrap(addr) {
 	pop8(ccr);
 @ifndef ADDRDIFF
+	pop(addr, $(ADDRSIZE) - 1);
+@else
 	skip(1);
-@endif
 	pop(addr, $(ADDRSIZE));
+@endif
 }
 
 

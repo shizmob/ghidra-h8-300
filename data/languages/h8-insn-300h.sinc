@@ -40,11 +40,11 @@ LDC_PTR: PTR24W is op24=0x6B2000; PTR24W { export PTR24W; }
 	ccr = LDC_PTR:1;
 }
 
-LDC_ADDR: "@("^DISP16^","^RSA^")" is op=0x6F; RSA & nib_hi=0; DISP16 { local addr = RSA:$(ADDRSIZE) + DISP16; export addr; }
-LDC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6B2000; DISP24 { local addr = RSA:$(ADDRSIZE) + DISP24; export addr; }
+LDC_ADDR: "@("^DISP16^","^RSA^")" is op=0x6F; RSA & nib_hi=0; DISP16 { local addr = (RSA + DISP16); export addr; }
+LDC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6B2000; DISP24 { local addr = (RSA + DISP24); export addr; }
 
 :ldc.w LDC_ADDR, "ccr" is op16=0x0140; LDC_ADDR {
-	ccr = *LDC_ADDR;
+	ccr = *LDC_ADDR:$(ADDRSIZE);
 }
 
 STC_PTR: RSPTRSW is op=0x69; RSPTRSW & nib_hi=0 { export RSPTRSW; }
@@ -56,9 +56,9 @@ STC_PTR: PTR24W is op24=0x6BA000; PTR24W { export PTR24W; }
 	STC_PTR = zext(ccr);
 }
 
-STC_ADDR: "@("^DISP16^","^RSASET^")" is op=0x6F; RSASET & nib_hi=0; DISP16 { local addr = RSASET:$(ADDRSIZE) + DISP16; export addr; }
-STC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6BA000; DISP24 { local addr = RSA:$(ADDRSIZE) + DISP24; export addr; }
+STC_ADDR: "@("^DISP16^","^RSASET^")" is op=0x6F; RSASET & nib_hi=0; DISP16 { local addr = RSASET + DISP16; export addr; }
+STC_ADDR: "@("^DISP24^","^RSA^")" is op=0x78; RSA & nib_hi=0; op24=0x6BA000; DISP24 { local addr = RSA + DISP24; export addr; }
 
 :stc.w "ccr", STC_ADDR is op16=0x140; STC_ADDR {
-	*STC_ADDR = ccr;
+	*STC_ADDR:$(ADDRSIZE) = ccr;
 }
