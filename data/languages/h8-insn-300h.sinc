@@ -8,12 +8,13 @@ RS32:    rs32 is rs32 & bit_lo=0 { export rs32; }
 RS32SET: rs32 is rs32 & bit_lo=1 { export rs32; }
 
 IMM2:     "#"^dit_lohi^":2" is dit_lohi { local c:1 = dit_lohi; export c; }
-DISP24:   imm24^":24"       is imm24    { local c:$(ADDRSIZE); extdisp24(c, imm24:3); export c; }
+DISP24:   simm24^":24"      is simm24    { local c:$(ADDRSIZE); extdisp24(c, simm24:3); export c; }
 IMM32:    "#"^imm32         is imm32    { local c:4 = imm32; export c; }
 
 RELPTR16: addr            is simm16 [ addr = inst_next + simm16; ] { export *[ram]:$(ADDRSIZE) addr; }
-PTR16D:   "@"^addr^":32"  is imm16 [ addr = 0 + imm16; ] { export *[ram]:4 addr; }
-PTR24:    "@"^addr^":24"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:$(ADDRSIZE) addr; }
+PTR16D:   "@"^addr^":32"  is imm16 [ addr = $(SEXT_IMM16); ] { export *[ram]:4 addr; }
+
+DEST24:   "@"^addr^":24"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:$(ADDRSIZE) addr; }
 PTR24B:   "@"^addr^":8"   is imm24 [ addr = 0 + imm24; ] { export *[ram]:1 addr; }
 PTR24W:   "@"^addr^":16"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:2 addr; }
 PTR24D:   "@"^addr^":32"  is imm24 [ addr = 0 + imm24; ] { export *[ram]:4 addr; }

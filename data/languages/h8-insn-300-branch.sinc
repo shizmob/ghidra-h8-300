@@ -63,8 +63,8 @@ CC_HI: "le" is nib_hi=0b1111 { local c:1 = ($(Z) == 1) || (($(N) == 1) ^ ($(V) =
 	goto [RSADDR];
 }
 
-:jmp PTR16 is op=0x5A; op=0x00; PTR16 {
-	goto PTR16;
+:jmp DEST16 is op=0x5A; op=0x00; DEST16 {
+	goto DEST16;
 }
 
 :jmp INDADDR8 is op=0x5B; INDADDR8 {
@@ -76,9 +76,9 @@ CC_HI: "le" is nib_hi=0b1111 { local c:1 = ($(Z) == 1) || (($(N) == 1) ^ ($(V) =
 	call [RSPTR];
 }
 
-:jsr PTR16 is op=0x5E; op=0x00; PTR16 {
+:jsr DEST16 is op=0x5E; op=0x00; DEST16 {
 	pushcall(&:$(ADDRSIZE) inst_next);
-	call PTR16;
+	call DEST16;
 }
 
 :jsr INDADDR8 is op=0x5F; INDADDR8 {

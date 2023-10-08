@@ -40,11 +40,11 @@ CC_LO: "le" is nib_lo=0b1111 { local c:1 = ($(Z) == 1) || (($(N) == 1) ^ ($(V) =
 # These two instructions override ones from the H8/300 that jumped to a 2-byte address,
 # but had a zero byte before the address -- these 3 bytes are used as an ADDR24
 # here in a backwards-compatible way. Sleigh allow the other instructions as a specialization of these ones.
-:jmp PTR24 is op=0x5A; PTR24 {
-	goto PTR24;
+:jmp DEST24 is op=0x5A; DEST24 {
+	goto DEST24;
 }
 
-:jsr PTR24 is op=0x5E; PTR24 {
+:jsr DEST24 is op=0x5E; DEST24 {
 	pushcall(&:$(ADDRSIZE) inst_next);
-	call PTR24;
+	call DEST24;
 }
