@@ -41,12 +41,12 @@
 :inc.l "#2", RD32 is op=0x0B; op_lo=0xF & RD32 { update_add(RD32, 2); }
 
 :neg.w RD16 is op=0x17; op_lo=0x9 & RD16 {
-	update_sub3(RD16, RD16, RD16);
+	update_sub_dest(0, RD16, RD16);
 	$(V) = (RD16 == (1 << 15));
 }
 
 :neg.l RD32 is op=0x17; op_lo=0xB & RD32 {
-	update_sub3(RD32, RD32, RD32);
+	update_sub_dest(0, RD32, RD32);
 	$(V) = (RD32 == (1 << 31));
 }
 

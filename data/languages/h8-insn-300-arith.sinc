@@ -1,6 +1,6 @@
 # Macros
 
-macro update_add(a, b) {
+macro update_add_dest(a, b, dest) {
 	local r = a + b;
 	update_ZN(r);
 	$(V) = scarry(a, b);
@@ -10,7 +10,10 @@ macro update_add(a, b) {
 	local h = (a & hmask) + (b & hmask);
 	$(H) = (h > hmask);
 
-	a = r;
+	dest = r;
+}
+macro update_add(a, b) {
+	update_add_dest(a, b, a);
 }
 macro update_add3(a, b, c) {
 	update_add(a, b);
@@ -19,7 +22,7 @@ macro update_add3(a, b, c) {
 	$(V) = $(V) | v;
 }
 
-macro update_sub(a, b) {
+macro update_sub_dest(a, b, dest) {
 	local r = a - b;
 	update_ZN(r);
 	$(V) = sborrow(a, b);
@@ -28,7 +31,10 @@ macro update_sub(a, b) {
 	local hmask = -1 >> 4;
 	$(H) = (b & hmask) > (a & hmask);
 
-	a = r;
+	dest = r;
+}
+macro update_sub(a, b) {
+	update_sub_dest(a, b, a);
 }
 macro update_sub3(a, b, c) {
 	update_sub(a, b);
@@ -95,7 +101,7 @@ macro update_sub3(a, b, c) {
 :inc.b RD8 is op=0x0A; op_lo=0x0 & RD8  { update_add(RD8, 1:1); }
 
 :neg.b RD8 is op=0x17; op_lo=0x8 & RD8 {
-	update_sub3(RD8, RD8, RD8);
+	update_sub_dest(0, RD8, RD8);
 	$(V) = (RD8 == (1 << 7));
 }
 
