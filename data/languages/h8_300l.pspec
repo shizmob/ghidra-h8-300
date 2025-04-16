@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<processor_spec>
+	<programcounter register="pc" />
+
+	<register_data>
+		<register name="r0" />
+		<register name="r1" />
+		<register name="r2" />
+		<register name="r3" />
+		<register name="r4" />
+		<register name="r5" />
+		<register name="r6" />
+		<register name="sp" />
+		<register name="ccr" />
+	</register_data>
+
+	<default_symbols>
+		<!-- Vectors -->
+		<symbol name="RESET" address="ram:0000" entry="true" />
+	</default_symbols>
+</processor_spec>

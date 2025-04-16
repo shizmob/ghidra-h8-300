@@ -7,6 +7,12 @@
 		<description>Hitachi H8/300</description>
 		<compiler name="default" spec="h8_300.cspec" id="default" />
 	</language>
+	<language id="h8_300l:BE:16:normal" processor="H8/300L" endian="big" size="16"
+	          version="0.1" variant="normal"
+		  slafile="h8_300.sla" processorspec="h8_300l.pspec">
+		<description>Hitachi H8/300L</description>
+		<compiler name="default" spec="h8_300.cspec" id="default" />
+	</language>
 	<language id="h8_300h:BE:32:normal" processor="H8/300H" endian="big" size="32"
 	          version="0.1" variant="normal"
 		  slafile="h8_300h_normal.sla" processorspec="h8_300h_normal.pspec">
