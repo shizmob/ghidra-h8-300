@@ -17,6 +17,8 @@
 	<returnaddress>
 		<varnode space="stack" offset="0" size="2" />
 	</returnaddress>
+
+	<!-- Ref for __cc_version*: https://wwwfiles.iar.com/H8/EWH8_CompilerGuide.pdf -->
 	<default_proto>
 		<prototype name="__regparam2" extrapop="2" stackshift="2">
 			<input>
@@ -32,6 +34,9 @@
 					<register name="er0" />
 				</pentry>
 			</output>
+			<killedbycall>
+				<register name="e7">
+			</killedbycall>
 			<unaffected>
 				<register name="er2" />
 				<register name="er3" />
@@ -59,6 +64,9 @@
 				<register name="er0" />
 			</pentry>
 		</output>
+		<killedbycall>
+			<register name="e7">
+		</killedbycall>
 		<unaffected>
 			<register name="er3" />
 			<register name="er4" />
@@ -81,13 +89,16 @@
 				<register name="er6" />
 			</pentry>
 		</output>
+		<killedbycall>
+			<register name="er5" />
+			<register name="e7" />
+		</killedbycall>
 		<unaffected>
 			<register name="er0" />
 			<register name="er1" />
 			<register name="er2" />
 			<register name="er3" />
 			<register name="er4" />
-			<register name="er5" />
 			<register name="sp" />
 		</unaffected>
 	</prototype>
@@ -108,6 +119,9 @@
 				<register name="er6" />
 			</pentry>
 		</output>
+		<killedbycall>
+			<register name="e7">
+		</killedbycall>
 		<unaffected>
 			<register name="er0" />
 			<register name="er1" />
@@ -136,7 +150,14 @@
 			<pentry minsize="1" maxsize="4">
 				<register name="er6" />
 			</pentry>
+			<pentry minsize="8" maxsize="8">
+				<register name="er5" />
+				<register name="er4" />
+			</pentry>
 		</output>
+		<killedbycall>
+			<register name="e7">
+		</killedbycall>
 		<unaffected>
 			<register name="er0" />
 			<register name="er1" />
