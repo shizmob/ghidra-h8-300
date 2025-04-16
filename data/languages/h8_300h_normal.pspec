@@ -10,7 +10,7 @@
 		<register name="er4" />
 		<register name="er5" />
 		<register name="er6" />
-		<register name="sp" />
+		<register name="er7" />
 		<register name="ccr" />
 	</register_data>
 
