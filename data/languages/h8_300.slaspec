@@ -1,0 +1,46 @@
+# Basics
+
+@define ADDRSIZE "2"
+
+define endian=big;
+define alignment=2;
+
+define space ram type=ram_space size=$(ADDRSIZE) default;
+define space register type=register_space size=2;
+
+define register offset=0x00 size=1
+	[ r0h r0l r1h r1l r2h r2l r3h r3l r4h r4l r5h r5l r6h r6l r7h r7l _   _   ccr ];
+define register offset=0x00 size=2
+	[ r0      r1      r2      r3      r4      r5      r6      sp      pc          ];
+
+define token op_8(8)    op    = (0, 7);
+define token op_16(16)  op16  = (0, 15);
+define token imm_8(8)   imm8  = (0, 7)   simm8 = (0, 7) signed;
+define token imm_16(16) imm16 = (0, 15)  simm16 = (0, 15) signed;
+
+define token split(8)
+	nib_hi  = (0, 3)
+	rd8     = (0, 3)
+	rd16    = (0, 3)
+	rdA     = (0, 2)
+	trip_hi = (0, 2)
+	bit_hi  = (3, 3)
+	op_lo   = (4, 7)
+	nib_lo  = (4, 7)
+	rs8     = (4, 7)
+	rs16    = (4, 7)
+	rsA     = (4, 6)
+	trip_lo = (4, 6)
+	dit_lohi= (4, 5)
+	bit_lo  = (7, 7)
+;
+
+attach variables [ rs8 rd8 ]
+	[ r0h r1h r2h r3h r4h r5h r6h r7h r0l r1l r2l r3l r4l r5l r6l r7l ];
+attach variables [ rs16 rd16 ]
+	[ r0 r1 r2 r3 r4 r5 r6 r7 ];
+
+@define REG_SRC "r5"
+@define REG_DST "r6"
+
+@include "h8-insn-300.sinc"
